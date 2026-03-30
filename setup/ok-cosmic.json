@@ -1,0 +1,11 @@
+{
+  "graph": {
+    "dbPath": "/path/to/your-current-project",
+    "dbName": "ok-cosmic-knowledge.db",
+    "logFile": "/tmp/cosmic_scripts_graph.log"
+  },
+  "meta": {
+    "apiUrl": "",
+    "timeoutSeconds": 10
+  }
+}

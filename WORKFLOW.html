@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>ok-cosmic Skill 工作流程图</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 40px; }
+        h1 { text-align: center; font-size: 28px; margin-bottom: 8px; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 40px; font-size: 14px; }
+        .section { background: #1e293b; border-radius: 12px; padding: 32px; margin-bottom: 32px; border: 1px solid #334155; }
+        .section h2 { font-size: 18px; margin-bottom: 20px; color: #93c5fd; }
+        .section h2::before { content: ''; display: inline-block; width: 4px; height: 18px; background: #667eea; border-radius: 2px; margin-right: 8px; vertical-align: text-bottom; }
+        .mermaid { display: flex; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<h1>ok-cosmic Skill 工作流程图</h1>
+<p class="subtitle">封装优先 · 原生兜底 · 生成后自动校验</p>
+
+<div class="section">
+    <h2>全局流程总览（6 步流水线）</h2>
+    <div class="mermaid">
+flowchart TD
+    START(["🧑‍💻 用户提出开发需求"]) --> STEP1
+
+    subgraph STEP1["① 识别插件类型"]
+        S1A["查快速决策矩阵\n(14 种插件类型)"]
+        S1B{{"匹配到插件类型？"}}
+        S1A --> S1B
+    end
+
+    STEP1 --> STEP2
+
+    subgraph STEP2["② 读参考文档"]
+        S2A["读 references/adv/*.md\n(封装层文档)"]
+        S2B["读 references/base/plugin/*.md\n(原生事件文档)"]
+        S2C{{"封装层覆盖？"}}
+        S2A --> S2C
+        S2C -- 是 --> S2D["确认事件边界\n与适用场景"]
+        S2C -- 否 --> S2B --> S2D
+    end
+
+    STEP2 --> STEP3
+
+    subgraph STEP3["③ 读模板骨架"]
+        S3A["读 assets/*.java\n(对应插件模板)"]
+        S3B["沿用方法签名\n命名风格与注释结构"]
+        S3C["小场景可用\nassets/snippets/*.java"]
+        S3A --> S3B
+        S3A --> S3C
+    end
+
+    STEP3 --> STEP4
+
+    subgraph STEP4["④ 查询事实来源"]
+        S4A{{"字段标识\n是否确定？"}}
+        S4B["cosmic-form-metadata.py\n查元数据字段"]
+        S4C{{"SDK 签名\n是否确定？"}}
+        S4D["cosmic-api-knowledge.py\n查类/方法/继承树"]
+        S4A -- 否 --> S4B --> S4E["字段/签名已确认"]
+        S4A -- 是 --> S4C
+        S4C -- 否 --> S4D --> S4E
+        S4C -- 是 --> S4E
+    end
+
+    STEP4 --> STEP5
+
+    subgraph STEP5["⑤ 生成代码"]
+        S5A["插件类型 ✅\n事件方法 ✅\n字段/签名 ✅"]
+        S5B["按模板风格生成代码\n遵守编码偏好"]
+        S5A --> S5B
+    end
+
+    STEP5 --> STEP6
+
+    subgraph STEP6["⑥ Post-Lint 自动校验"]
+        S6A["执行 cosmic-post-lint.py\n--fix-hint"]
+        S6B{{"有 ERROR？"}}
+        S6C["自动修复"]
+        S6D{{"重试 ≤ 3次？"}}
+        S6E{{"有 WARNING？"}}
+        S6F["优先修复或\n注释保留理由"]
+        S6G["报告用户\n人工介入"]
+        S6H["✅ 校验通过"]
+
+        S6A --> S6B
+        S6B -- 是 --> S6C --> S6D
+        S6D -- 是 --> S6A
+        S6D -- 否 --> S6G
+        S6B -- 否 --> S6E
+        S6E -- 是 --> S6F --> S6H
+        S6E -- 否 --> S6H
+    end
+
+    STEP6 --> DELIVER(["📦 交付代码给用户"])
+
+    style START fill:#667eea,stroke:#5a67d8,color:#fff
+    style DELIVER fill:#48bb78,stroke:#38a169,color:#fff
+    style S6H fill:#48bb78,stroke:#38a169,color:#fff
+    style S6G fill:#fc8181,stroke:#e53e3e,color:#fff
+    style STEP1 fill:#1e293b,stroke:#4299e1,color:#e2e8f0
+    style STEP2 fill:#1e293b,stroke:#4299e1,color:#e2e8f0
+    style STEP3 fill:#1e293b,stroke:#4299e1,color:#e2e8f0
+    style STEP4 fill:#1e293b,stroke:#d69e2e,color:#e2e8f0
+    style STEP5 fill:#1e293b,stroke:#48bb78,color:#e2e8f0
+    style STEP6 fill:#1e293b,stroke:#ed64a6,color:#e2e8f0
+    </div>
+</div>
+
+<div class="section">
+    <h2>封装优先路由详情</h2>
+    <div class="mermaid">
+flowchart LR
+    REQ(["需求关键词"]) --> ROUTE
+
+    subgraph ROUTE["能力封装路由 (按需加载 1~2 个文档)"]
+        R1["保存/提交/审核\n→ operate-chain.md"]
+        R2["下推/选单\n→ botp-convert.md"]
+        R3["查询/聚合\n→ query-dataset.md"]
+        R4["后台打开表单\n→ view-handler.md"]
+        R5["控件/UI消息\n→ form-utils.md"]
+        R6["DynamicObject\n→ dynamic-object.md"]
+        R7["弹性域\n→ flex-prop.md"]
+        R8["附件\n→ attachment-api.md"]
+    end
+
+    ROUTE --> CODE["生成代码"]
+
+    subgraph FALLBACK["原生 SDK 兜底 (仅封装层不够时)"]
+        F1["ORM/QFilter → sdk-orm-access.md"]
+        F2["内存计算 → sdk-algo.md"]
+        F3["ServiceHelper → sdk-dynamic-model-svc.md"]
+        F4["分布式ID/锁/缓存/事务"]
+        F5["日志/异常/线程池/文件"]
+    end
+
+    ROUTE -. "封装不够" .-> FALLBACK --> CODE
+
+    style REQ fill:#667eea,stroke:#5a67d8,color:#fff
+    style CODE fill:#48bb78,stroke:#38a169,color:#fff
+    style ROUTE fill:#1e293b,stroke:#4299e1,color:#e2e8f0
+    style FALLBACK fill:#1e293b,stroke:#fc8181,color:#e2e8f0
+    </div>
+</div>
+
+<div class="section">
+    <h2>Post-Lint 检查模块架构</h2>
+    <div class="mermaid">
+flowchart TD
+    MAIN["cosmic-post-lint.py\n(薄编排层)"]
+
+    MAIN --> SC["lint/scene_check.py\nSCENE-001~005"]
+    MAIN --> ST["lint/style_check.py\nSTYLE-001~007"]
+    MAIN --> RC["lint/resource_check.py\nRESOURCE-001~002"]
+    MAIN --> VC["lint/verify_check.py\nVERIFY-001 (--strict)"]
+
+    SC --> BASE["lint/base.py\nSeverity · LintIssue · LintReport\n工具函数"]
+    ST --> BASE
+    RC --> BASE
+    VC --> BASE
+
+    MAIN --> REPORT{{"输出"}}
+    REPORT --> T["终端彩色报告"]
+    REPORT --> J["JSON (CI/CD)"]
+
+    style MAIN fill:#667eea,stroke:#5a67d8,color:#fff
+    style BASE fill:#fefcbf,stroke:#d69e2e,color:#1e293b
+    style SC fill:#fed7e2,stroke:#ed64a6,color:#1e293b
+    style ST fill:#e9d8fd,stroke:#9f7aea,color:#1e293b
+    style RC fill:#feebc8,stroke:#dd6b20,color:#1e293b
+    style VC fill:#c6f6d5,stroke:#48bb78,color:#1e293b
+    </div>
+</div>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        themeVariables: {
+            fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '14px',
+        }
+    });
+</script>
+
+</body>
+</html>

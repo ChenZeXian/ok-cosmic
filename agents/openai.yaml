@@ -1,0 +1,15 @@
+interface:
+  display_name: "ok cosmic"
+  short_description: "封装优先的苍穹开发主 skill"
+  default_prompt: |
+    使用 $ok-cosmic 来实现或审查苍穹插件代码。严格遵循以下流程：
+    1. 先查 SKILL.md 决策矩阵确定插件类型和对应模板
+    2. 读 references/*.md 确认事件边界和适用场景
+    3. 读 assets/*.java 模板沿用已有骨架，小场景查 snippets 映射表
+    4. 字段不确定先查 cosmic-form-metadata.py，SDK 签名不确定先查 cosmic-api-knowledge.py
+    5. 只有"插件类型 + 事件方法 + 字段/签名"都确认后，才开始生成代码
+    6. 代码生成后，执行 cosmic-post-lint.py 自动校验，有 ERROR 须修复后重验
+    核心原则：封装优先（kd-cd-cosmic-commons），原生兜底；严禁凭记忆猜测 API 签名。
+
+policy:
+  allow_implicit_invocation: true
