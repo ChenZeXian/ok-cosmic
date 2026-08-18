@@ -1,3 +1,5 @@
+
+
 # ok-cosmic
 
 面向金蝶云苍穹开发的 AI Skill，提供插件模板、离线 API 知识查询、表单元数据查询与文档增强能力。
@@ -379,7 +381,7 @@ cat ok-cosmic.json
 ls -la skills/ok-cosmic/setup/ok-cosmic-knowledge.db
 
 # 尝试更宽泛的搜索
-python3 cosmic-api-knowledge.py --config ok-cosmic.json search Helper --kind helper
+python3 skills/ok-cosmic/scripts/cosmic-api-knowledge.py --config ok-cosmic.json search Helper --kind helper
 ```
 
 ### Q3: 元数据查询超时
